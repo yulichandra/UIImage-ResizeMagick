@@ -167,6 +167,5 @@ static CGInterpolationQuality _interpolationQuality = kCGInterpolationNone;
     CGFloat widthRatio = expected.width / original.width;
     CGFloat heightRatio = expected.height / original.height;
     return CGSizeMake(widthRatio, heightRatio);
-}
 
 @end
