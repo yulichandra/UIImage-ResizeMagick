@@ -99,39 +99,37 @@ static CGInterpolationQuality _interpolationQuality = kCGInterpolationNone;
 - (UIImage *) resizedImageByWidth:  (NSUInteger) width
 {
     CGImageRef imgRef = [self CGImageWithCorrectOrientation];
-    CGSize originalSize = [self originalSizeWithImageRef:imgRef];
-    CGFloat ratio = width/originalSize.width;
+    CGSize originalSize = [UIImage originalSizeWithImageRef:imgRef];
+    CGFloat height = [UIImage resizedHeightByWidth:width originalSize:originalSize];
     CGImageRelease(imgRef);
-    return [self drawImageInBounds: CGRectMake(0, 0, width, round(originalSize.height * ratio))];
+    return [self drawImageInBounds: CGRectMake(0, 0, width, height)];
 }
 
 - (UIImage *) resizedImageByHeight:  (NSUInteger) height
 {
     CGImageRef imgRef = [self CGImageWithCorrectOrientation];
-    CGSize originalSize = [self originalSizeWithImageRef:imgRef];
-    CGFloat ratio = height / originalSize.height;
+    CGSize originalSize = [UIImage originalSizeWithImageRef:imgRef];
+    CGFloat width = [UIImage resizedWidthByHeight:height originalSize:originalSize];
     CGImageRelease(imgRef);
-    return [self drawImageInBounds: CGRectMake(0, 0, round(originalSize.width * ratio), height)];
+    return [self drawImageInBounds: CGRectMake(0, 0, width, height)];
 }
 
 - (UIImage *) resizedImageWithMinimumSize: (CGSize) size
 {
     CGImageRef imgRef = [self CGImageWithCorrectOrientation];
-    CGSize originalSize = [self originalSizeWithImageRef:imgRef];
-    CGSize ratioSize = [self ratioSizeWithOriginalSize:originalSize expectedSize:size];
-    CGFloat scaleRatio = ratioSize.width > ratioSize.height ? ratioSize.width : ratioSize.height;
+    CGSize originalSize = [UIImage originalSizeWithImageRef:imgRef];
+    size = [UIImage resizedSizeWithMinimumSize:size originalSize:originalSize];
     CGImageRelease(imgRef);
-    return [self drawImageInBounds: CGRectMake(0, 0, round(originalSize.width * scaleRatio), round(originalSize.height * scaleRatio))];
+    return [self drawImageInBounds: CGRectMake(0, 0, size.width, size.height)];
 }
 
 - (UIImage *) resizedImageWithMaximumSize: (CGSize) size
 {
     CGImageRef imgRef = [self CGImageWithCorrectOrientation];
-    CGSize originalSize = [self originalSizeWithImageRef:imgRef];
-    CGSize ratioSize = [self ratioSizeWithOriginalSize:originalSize expectedSize:size];
-    CGFloat scaleRatio = ratioSize.width < ratioSize.height ? ratioSize.width : ratioSize.height;
+    CGSize originalSize = [UIImage originalSizeWithImageRef:imgRef];
+    size = [UIImage resizedSizeWithMaximumSize:size originalSize:originalSize];
     CGImageRelease(imgRef);
-    return [self drawImageInBounds: CGRectMake(0, 0, round(originalSize.width * scaleRatio), round(originalSize.height * scaleRatio))];
+    return [self drawImageInBounds: CGRectMake(0, 0, size.width, size.height)];
 }
 
 - (UIImage *) drawImageInBounds: (CGRect) bounds
@@ -145,8 +143,8 @@ static CGInterpolationQuality _interpolationQuality = kCGInterpolationNone;
     return resizedImage;
 }
 
-- (UIImage*) croppedImageWithRect: (CGRect) rect {
-    
+- (UIImage*) croppedImageWithRect: (CGRect) rect
+{
     UIGraphicsBeginImageContextWithOptions(rect.size, NO, 0.0);
     CGContextRef context = UIGraphicsGetCurrentContext();
     CGContextSetInterpolationQuality(context, _interpolationQuality);
@@ -159,14 +157,42 @@ static CGInterpolationQuality _interpolationQuality = kCGInterpolationNone;
     return subImage;
 }
 
--(CGSize)originalSizeWithImageRef:(CGImageRef)imgRef{
++(CGSize)originalSizeWithImageRef:(CGImageRef)imgRef
+{
     return CGSizeMake(CGImageGetWidth(imgRef), CGImageGetHeight(imgRef));
 }
 
--(CGSize)ratioSizeWithOriginalSize:(CGSize)original expectedSize:(CGSize)expected{
++(CGSize)ratioSizeWithOriginalSize:(CGSize)original expectedSize:(CGSize)expected
+{
     CGFloat widthRatio = expected.width / original.width;
     CGFloat heightRatio = expected.height / original.height;
     return CGSizeMake(widthRatio, heightRatio);
+}
+
++ (CGFloat) resizedHeightByWidth: (NSUInteger) width originalSize:(CGSize)original
+{
+    CGFloat ratio = width/original.width;
+    return round(original.height * ratio);
+}
+
++ (CGFloat) resizedWidthByHeight: (NSUInteger) height originalSize:(CGSize)original
+{
+    CGFloat ratio = height/original.height;
+    return round(original.width * ratio);
+}
+
++ (CGSize) resizedSizeWithMaximumSize: (CGSize) size originalSize: (CGSize) original
+{
+    CGSize ratioSize = [UIImage ratioSizeWithOriginalSize:original expectedSize:size];
+    CGFloat scaleRatio = ratioSize.width < ratioSize.height ? ratioSize.width : ratioSize.height;
+    return CGSizeMake(round(original.width * scaleRatio), round(original.height * scaleRatio));
+}
+
++ (CGSize) resizedSizeWithMinimumSize: (CGSize) size originalSize: (CGSize) original
+{
+    CGSize ratioSize = [UIImage ratioSizeWithOriginalSize:original expectedSize:size];
+    CGFloat scaleRatio = ratioSize.width > ratioSize.height ? ratioSize.width : ratioSize.height;
+    return CGSizeMake(round(original.width * scaleRatio), round(original.height * scaleRatio));
 }
 
 @end
